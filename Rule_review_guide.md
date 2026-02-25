@@ -1,4 +1,5 @@
 #FIREWALL RULE REVIEW
+
     • identifying overly permissive, risky, unused, or misaligned rules by analyzing policy attributes
     • Each rule is reviewed using the following core parameters:
     • Source Zone / Interface
@@ -10,37 +11,38 @@
     • Security Profiles / Inspection
     • Logging & Hit Count
 
-    • determine traffic direction:
+
+1. determine traffic direction:
 Inbound (External → Internal)
 Outbound (Internal → External)
 Inter-zone / Lateral
 Inbound rules generally carry higher risks.
 Outbound rules focus more on data exfiltration and command-and-control risks.
 
-    • Source & Destination Scope
+2. Source & Destination Scope
 any / all / large subnets (e.g., 0.0.0.0/0)
 Broad object groups
 Narrow scope → Lower risk
 Broad scope → Higher risk
 
-    • Service / Port
+3. Service / Port
 Must be specific (http, tcp/443)
 Not broad (any/all, tcp-all)
 
-    • Also consider protocol risk:
+4. Also consider protocol risk:
 High-risk services: RDP, SMB, SSH, FTP, Telnet, Database ports, LDAP, etc.
 Web services behind reverse proxy/WAF are lower risk than direct exposure
 
-    • Check whether rule has Security Profiles & Controls (IPS/AV/WAF/SSL-INSPECTION, VPN, MFA, IP RESTRICTIONS)
+5. Check whether rule has Security Profiles & Controls (IPS/AV/WAF/SSL-INSPECTION, VPN, MFA, IP RESTRICTIONS)
 
-    • Hit Count & Logging
+6. Hit Count & Logging
 Active Use (>1000 hits typical business traffic)
 Low Use (<10 hits or rare usage (validate necessity))
 Unused (0 hits)
 Zero Hit → Candidate for cleanup
 Very high hits → Business-critical; ensure tightly scoped
 
-    • Logging disabled → Visibility gap
+7. Logging disabled → Visibility gap
 
 ##Firewall Rule Review – Severity Matrix
 
@@ -69,62 +71,77 @@ Example 1:
 |---------------------|----------------|------------------|--------------------------|----------------|----------------|--------|---------|-------------------------|-----------|
 | INTERNAL-RDP-ACCESS | Internal-Users | Internal-Servers | USER_SUBNET_10.10.1.0/24 | FILE-SERVER-01 | RDP (TCP/3389) | ACCEPT | Enabled | AV, IPS, SSL-Inspection | 1483 (>0) |
 
-    • Traffic Direction> inside: internal-to-internal / trusted-zone traffic, not internet-facing.
-Internal RDP exposure less risky than external RDP exposure
-    • Source: USER_SUBNET_10.10.1.0/24
-Restricted private subnet, not ANY
-Logic: Narrow source scope = controlled access.
-    • Destination: FILE-SERVER-01
-Single host or defined host object
-Logic: Specific destination is better than subnet or ANY.
-    • Service: RDP is a sensitive service, but we verified the scoping
-Action allowed (make sure properly scoped rest)
-    • Security profiles enabled significantly reduced exploitation risk
-    • Hit count suggest it actively using: 
-    • RULE LOGIC: This rule allows RDP access from a specific internal subnet to a specific internal system with multiple security profiles enabled.
-    • Severity: low or info if properly scoped
+• Traffic Direction> inside: internal-to-internal / trusted-zone traffic, not internet-facing
+  Internal RDP exposure less risky than external RDP exposure.
+  
+• Source: USER_SUBNET_10.10.1.0/24
+  Restricted private subnet, not ANY.
+  Logic: Narrow source scope = controlled access.
+  
+• Destination: FILE-SERVER-01
+  Single host or defined host object
+  Logic: Specific destination is better than subnet or ANY.
+  
+• Service: RDP is a sensitive service, but we verified the scoping
+  Action allowed (make sure properly scoped rest).
+  
+• Security profiles enabled significantly reduced exploitation risk.
+
+• Hit count suggest it actively using.
+
+• RULE LOGIC: This rule allows RDP access from a specific internal subnet to a specific internal system with multiple security profiles enabled.
+
+• Severity: low or info if properly scoped
+
+
 
 Example 2: 
 | Rule Name           | From Zone | To Zone           | Source | Destination     | Service        | Action | Status  | Security Profiles | Hit Count |
 |---------------------|-----------|-------------------|--------|-----------------|----------------|--------|---------|-------------------|-----------|
 | INTERNET-SMB-ACCESS | Internet  | Internal-Servers  | ANY    | FILE-SERVER-01  | SMB (TCP/445)  | ACCEPT | Enabled | None              | 210 (>0)  |
 
-    • Traffic Direction:
+• Traffic Direction:
 Internet(any) → Internal
-Direct external exposure of internal system
-    • Source
+Direct external exposure of internal system.
+
+• Source
 ANY
-Logic: Unrestricted source
-    • Destination
+Logic: Unrestricted source.
+
+• Destination
 Specific internal server
-Logic: Internal file server directly reachable
-    • Service
-SMB is a sensitive file-sharing service
-    • Security Profiles
-None enabled
-    • Hit Count
-Actively used
-    • RULE LOGIC
+Logic: Internal file server directly reachable.
+
+• Service
+SMB is a sensitive file-sharing service.
+
+• Security Profiles: None enabled.
+
+• Hit Count:  Actively used.
+
+• RULE LOGIC
 This rule allows direct SMB access from the internet to an internal file server without inspection or compensating controls.
-    • Severity: High
+
+• Severity: High
+
 
 Example 3: 
 | Rule Name           | From Zone | To Zone        | Source | Destination    | Service         | Action | Status  | Security Profiles | Hit Count  |
 |---------------------|-----------|----------------|--------|----------------|-----------------|--------|---------|-------------------|------------|
 | INTERNET-WEB-ACCESS | Internet  | Internal-Web   | ANY    | WEB-SERVER-01  | HTTPS (TCP/443) | ACCEPT | Enabled | IPS, AV           | 18200 (>0) |
 
-    • Traffic Direction
-Internet → Internal
-    • Source
-ANY
-    • Destination
-Specific internal web server
-    • Service
-HTTPS web service
-    • Security Profiles
-IPS and AV enabled
-    • Hit Count
-Actively used
-    • RULE LOGIC
+• Traffic Direction: Internet → Internal
+
+• Source: ANY
+
+• Destination: Specific internal web server.
+
+• Service: HTTPS web service.
+
+• Security Profiles: IPS and AV enabled.
+
+• Hit Count: Actively used.
+
+• RULE LOGIC
 Publishes a web service directly to an internal server from the internet with inspection controls enabled.
 

@@ -1,6 +1,7 @@
 #FIREWALL RULE REVIEW
 
     • identifying overly permissive, risky, unused, or misaligned rules by analyzing policy attributes
+    
     • Each rule is reviewed using the following core parameters:
     • Source Zone / Interface
     • Destination Zone / Interface
@@ -43,6 +44,9 @@ Zero Hit → Candidate for cleanup
 Very high hits → Business-critical; ensure tightly scoped
 
 7. Logging disabled → Visibility gap
+   
+8. Identify unused, duplicate, or shadowed rules.
+
 
 ##Firewall Rule Review – Severity Matrix
 
